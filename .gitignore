@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+build/
+dist/
+*.log
+
+# Hardhat
+cache/
+artifacts/
+coverage/
+typechain/
+typechain-types/
+
+# Test artifacts
+*.test.local.js
+test-*.js
+*-test.js
+debug-*.js
+simple-*.js
+deployment-*.json
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Circom
+*.r1cs
+*.wasm
+*.zkey
+*.ptau
+*.sym
+*.wtns
+
+# Temporary files
+*.tmp
+*.bak
+*~.nib
+*.old
+*.[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9].*
+
+# Deployment artifacts (keep in deployments/ only)
+deployment.json
+deployment-*.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
