@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Environment variables
 .env
@@ -19,14 +18,6 @@ coverage/
 typechain/
 typechain-types/
 
-# Test artifacts
-*.test.local.js
-test-*.js
-*-test.js
-debug-*.js
-simple-*.js
-deployment-*.json
-
 # OS files
 .DS_Store
 .DS_Store?
@@ -42,12 +33,12 @@ Thumbs.db
 *.swo
 *~
 
-# Circom
-*.r1cs
-*.wasm
-*.zkey
-*.ptau
-*.sym
+# Circom build artifacts (keep important development files)
+# *.r1cs  # Keep constraint files for development
+# *.wasm  # Keep compiled circuits
+# *.zkey  # Keep proving keys
+# *.ptau  # Keep trusted setup
+# *.sym   # Keep symbol files
 *.wtns
 
 # Temporary files
