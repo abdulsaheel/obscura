@@ -31,6 +31,28 @@ async function main() {
   const vaultAddress = await vault.getAddress();
   console.log("✅ PrivateVault deployed to:", vaultAddress);
 
+  // Get vault codehash
+  const vaultCodeHash = await hre.ethers.provider.getCode(vaultAddress).then(code => hre.ethers.keccak256(code));
+  console.log("🔍 Vault codehash:", vaultCodeHash);
+
+  // Deploy IndexerRegistry with the vault's codehash
+  console.log("\n📋 Deploying IndexerRegistry...");
+  const IndexerRegistry = await hre.ethers.getContractFactory("IndexerRegistry");
+  const registry = await IndexerRegistry.deploy(vaultCodeHash);
+  await registry.waitForDeployment();
+  const registryAddress = await registry.getAddress();
+  console.log("✅ IndexerRegistry deployed to:", registryAddress);
+
+  // Index the vault with the registry
+  console.log("\n🔗 Indexing vault with registry...");
+  const indexTx = await vault.indexWithRegistry(registryAddress);
+  await indexTx.wait();
+  console.log("✅ Vault indexed successfully");
+
+  // Verify indexing
+  const isIndexed = await registry.isVaultIndexed(vaultAddress);
+  console.log("🔍 Vault indexed status:", isIndexed);
+
   // Get initial stats
   console.log("\n📊 Initial Vault Statistics:");
   const stats = await vault.getStatistics();
@@ -42,9 +64,11 @@ async function main() {
 
   console.log("\n✨ Deployment Summary:");
   console.log("━".repeat(60));
-  console.log("Verifier:     ", verifierAddress);
-  console.log("PoseidonT3:   ", poseidonAddress);
-  console.log("PrivateVault: ", vaultAddress);
+  console.log("Verifier:        ", verifierAddress);
+  console.log("PoseidonT3:      ", poseidonAddress);
+  console.log("PrivateVault:    ", vaultAddress);
+  console.log("IndexerRegistry: ", registryAddress);
+  console.log("Vault CodeHash:  ", vaultCodeHash);
   console.log("━".repeat(60));
 
   console.log("\n💾 Saving addresses to .env...");
@@ -57,6 +81,8 @@ async function main() {
     { key: "VERIFIER_ADDRESS", value: verifierAddress },
     { key: "POSEIDON_ADDRESS", value: poseidonAddress },
     { key: "VAULT_ADDRESS", value: vaultAddress },
+    { key: "INDEXER_REGISTRY_ADDRESS", value: registryAddress },
+    { key: "CANONICAL_CODEHASH", value: vaultCodeHash },
   ];
 
   addresses.forEach(({ key, value }) => {

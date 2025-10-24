@@ -78,14 +78,16 @@ contract ObscuraFactory is Ownable, Pausable {
     // ============ DEPLOYMENT FUNCTIONS ============
     
     /**
-     * @dev Deploy an official PrivateVault instance
+     * @dev Deploy an official PrivateVault instance with deterministic bytecode
      * @param _verifier Address of the ZK-SNARK verifier contract
      * @param _hasher Address of the Poseidon hash contract
+     * @param _salt Salt for CREATE2 deployment (determines address)
      * @return vault Address of the deployed vault
      */
     function deployOfficialVault(
         address _verifier,
-        address _hasher
+        address _hasher,
+        bytes32 _salt
     ) 
         external 
         payable
@@ -95,9 +97,20 @@ contract ObscuraFactory is Ownable, Pausable {
         whenNotPaused
         returns (address vault) 
     {
-        // Deploy the vault (simplified - no auth needed for testing)
-        PrivateVault newVault = new PrivateVault(_verifier, _hasher);
-        vault = address(newVault);
+        // Use CREATE2 for deterministic deployment
+        bytes memory bytecode = abi.encodePacked(
+            type(PrivateVault).creationCode,
+            abi.encode(_verifier, _hasher, address(this))
+        );
+        
+        assembly {
+            vault := create2(0, add(bytecode, 0x20), mload(bytecode), _salt)
+        }
+        
+        require(vault != address(0), "Vault deployment failed");
+        
+        // Transfer ownership to the deployer
+        PrivateVault(vault).transferOwnership(msg.sender);
         
         // Register as official
         officialVaults[vault] = true;

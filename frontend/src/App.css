@@ -1,0 +1,175 @@
+
+/* Minimal, mature white theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root{
+  --bg: #ffffff;
+  --panel: #fafafa;
+  --muted: #6b6b6b;
+  --text: #0b0b0b;
+  --border: #e6e6e6;
+  --primary: #0b0b0b; /* primary action color */
+  --primary-contrast: #ffffff;
+  --success: #0f9d58;
+  --error: #d93025;
+  --radius: 10px;
+  --gap: 1.25rem;
+  --container-width: 1400px;
+  --shadow-subtle: 0 6px 18px rgba(11,11,11,0.06);
+}
+
+html,body,#root{
+  height:100%;
+}
+
+.app{
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.6;
+}
+
+.header{
+  max-width:var(--container-width);
+  margin:0 auto;
+  padding:2.25rem 1.5rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  border-bottom:1px solid var(--border);
+}
+
+.header h1{
+  margin:0;
+  font-size:1.4rem;
+  font-weight:700;
+  letter-spacing: -0.01em;
+}
+
+.header p{
+  margin:0;
+  color:var(--muted);
+  font-size:0.95rem;
+  font-weight:500;
+}
+
+.connect-btn{
+  background:var(--primary);
+  color:var(--primary-contrast);
+  border:1px solid rgba(11,11,11,0.06);
+  padding:0.6rem 1rem;
+  font-size:0.95rem;
+  font-weight:600;
+  border-radius:8px;
+  cursor:pointer;
+  box-shadow:var(--shadow-subtle);
+}
+
+.connect-btn:disabled{opacity:0.6;cursor:not-allowed}
+
+.account{
+  background:transparent;
+  padding:0.35rem 0.6rem;
+  border-radius:8px;
+  font-weight:600;
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+
+.container{
+  max-width:var(--container-width);
+  width: min(var(--container-width), 96vw);
+  margin:2.25rem auto;
+  padding:0 2rem 3rem;
+  display: grid;
+  grid-template-columns: 1fr 380px; /* main area + sidebar */
+  gap: 2rem;
+  align-items: start;
+}
+
+.tabs{display:flex;gap:1rem;margin-bottom:1.5rem;grid-column:1}
+
+.tab{
+  background:transparent;
+  border:1px solid transparent;
+  padding:0.6rem 1rem;
+  font-weight:600;
+  color:var(--muted);
+  cursor:pointer;
+  border-radius:8px;
+}
+
+.tab.active{color:var(--text);border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-subtle)}
+
+.vault-selector{margin-bottom:1.75rem;grid-column:1}
+.vault-selector label{display:block;margin-bottom:0.5rem;font-weight:600;color:var(--muted)}
+
+.vault-select{width:100%;padding:0.8rem 0.9rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:0.95rem}
+
+.form{
+  background:var(--panel);
+  border-radius:var(--radius);
+  padding:1.75rem;
+  box-shadow:var(--shadow-subtle);
+  margin-bottom:1.5rem;
+  grid-column:1;
+}
+
+.form h2{margin:0 0 1rem 0;font-size:1.25rem;font-weight:700}
+
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;margin-bottom:0.5rem;color:var(--muted);font-weight:600}
+
+.form-group input,.form-group select{width:100%;padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:0.95rem;color:var(--text)}
+.form-group input::placeholder{color:var(--muted)}
+
+/* Ensure form controls show dark text even if a global dark theme sets root color to white */
+input,textarea,select{color:var(--text);-webkit-text-fill-color:var(--text)}
+
+.action-btn{
+  width:100%;padding:0.8rem 1rem;background:var(--primary);color:var(--primary-contrast);border-radius:8px;border:none;font-weight:700;cursor:pointer;font-size:0.98rem;box-shadow:var(--shadow-subtle)
+}
+.action-btn:disabled{opacity:0.55;cursor:not-allowed}
+
+.secret-display{margin-top:1rem;padding:1rem;border-radius:8px;border:1px solid var(--border);background:#fff}
+.secret-values{display:grid;gap:0.6rem}
+.secret-values div{padding:0.6rem;border-radius:6px;background:transparent;border:1px dashed var(--border)}
+.secret-values code{display:block;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;font-size:0.85rem;color:var(--text);word-break:break-all}
+
+/* Notes and boxed values */
+.note{color:var(--text)}
+.note p{color:var(--muted)}
+.note strong{color:var(--text)}
+
+.notes-section{padding:0;background:transparent;grid-column:2}
+.notes-section h3{margin:0 0 0.75rem 0;font-size:1.05rem}
+.notes-list{display:grid;gap:0.8rem}
+
+.note{padding:0.9rem;border-radius:8px;border:1px solid var(--border);background:#fff}
+.note p{margin:0 0 0.5rem 0;color:var(--muted);font-size:0.92rem}
+.note strong{color:var(--text)}
+
+.toast-container{position:fixed;top:1.25rem;right:1.25rem;z-index:1200;display:flex;flex-direction:column;gap:0.6rem}
+.toast{background:#0b0b0b;color:#fff;padding:0.7rem 1rem;border-radius:8px;box-shadow:var(--shadow-subtle);min-width:220px;display:flex;align-items:center;gap:0.6rem}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--error)}
+.toast-close{margin-left:auto;background:transparent;border:none;color:rgba(255,255,255,0.9);cursor:pointer;font-size:1.1rem}
+
+/* accessibility focus */
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(11,11,11,0.06);outline-offset:3px;border-radius:6px}
+
+@media (max-width:1100px){
+  .container{grid-template-columns: 1fr; width: calc(100% - 2rem); padding:0 1rem 2rem;}
+  .tabs{gap:0.6rem}
+  .notes-section{grid-column:1}
+}
+
+@media (max-width:480px){
+  .header{padding:1rem}
+  .tabs{gap:0.5rem}
+}
+
