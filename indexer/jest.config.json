@@ -1,0 +1,7 @@
+{
+  "testEnvironment": "node",
+  "testMatch": ["**/test/**/*.test.js"],
+  "transform": {},
+  "moduleFileExtensions": ["js", "mjs", "json"],
+  "testTimeout": 30000
+}

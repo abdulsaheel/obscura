@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Note: we intentionally do NOT build the circom circuit in CI (compiling the
+# circuit + trusted setup is far too heavy). The proof tests instead reuse the
+# tracked runtime artifacts under frontend/public/circuits/ — scripts/lib/proof.js
+# falls back to those when circuits/ has not been built locally.
+
+jobs:
+  contracts:
+    name: Contracts (compile + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts
+        run: npx hardhat compile
+
+      - name: Run contract tests
+        # Proof tests auto-skip if circuit artifacts are absent. The runtime
+        # artifacts in frontend/public/circuits/ are tracked, so they DO run.
+        run: npx hardhat test
+
+  indexer:
+    name: Indexer (typecheck + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Workspace monorepo: install from the single root lockfile (hoists the
+      # indexer's deps incl. poseidon-lite), then run the indexer's scripts.
+      - name: Install dependencies (workspace root)
+        run: npm ci
+
+      - name: Typecheck
+        run: cd indexer && npx tsc --noEmit
+
+      - name: Run indexer tests
+        run: npm run test:indexer
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # The frontend is an npm workspace with no standalone lockfile, so its
+      # dependencies are installed from the root lockfile. Install at the repo
+      # root, then build inside frontend/.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build

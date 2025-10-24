@@ -1,0 +1,92 @@
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+
+# ---------------------------------------------------------------------------
+# Environment variables / secrets
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+# Local test notes contain secret/nullifier material — never commit
+note.json
+note-local.json
+
+# ---------------------------------------------------------------------------
+# Build outputs
+# ---------------------------------------------------------------------------
+build/
+dist/
+out/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# ---------------------------------------------------------------------------
+# Hardhat
+# ---------------------------------------------------------------------------
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# ---------------------------------------------------------------------------
+# Circuit artifacts (large / regenerable via `cd circuits && npm run build-all`)
+#   Trusted setup, constraint systems, witnesses and the circom JS witness
+#   generator are all reproducible and must NOT rebloat the repo.
+# ---------------------------------------------------------------------------
+*.ptau
+*.zkey
+*.r1cs
+*.sym
+*.wtns
+circuits/private-transfer_js/
+
+# ---------------------------------------------------------------------------
+# Runtime proof artifacts — KEEP TRACKED.
+#   Needed by the frontend at runtime AND by CI proof tests
+#   (scripts/lib/proof.js falls back to these when circuits/ is unbuilt).
+#   These negations override the broad *.zkey rule above.
+# ---------------------------------------------------------------------------
+!frontend/public/circuits/private-transfer.wasm
+!frontend/public/circuits/private-transfer_final.zkey
+!frontend/public/circuits/witness_calculator.js
+
+# ---------------------------------------------------------------------------
+# OS files
+# ---------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# IDE
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------------
+# Temporary files
+# ---------------------------------------------------------------------------
+*.tmp
+*.bak
+*.old
+
+# ---------------------------------------------------------------------------
+# Rust indexer build output (if present)
+# ---------------------------------------------------------------------------
+indexer-rust/obscura-indexer/target/
+
+# ---------------------------------------------------------------------------
+# Deployment artifacts: deployments/<network>.json IS tracked (no rule ignores it)
+# ---------------------------------------------------------------------------

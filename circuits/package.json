@@ -1,0 +1,26 @@
+{
+  "name": "@obscura/circuits",
+  "version": "1.0.0",
+  "description": "ZK-SNARK circuits for private transfers",
+  "main": "index.js",
+  "scripts": {
+    "compile": "circom private-transfer.circom --r1cs --wasm --sym --output .",
+    "test": "mocha test/*.test.js --timeout 120000",
+    "setup:ptau": "curl -fL -o ppot_0080_14.ptau https://pse-trusted-setup-ppot.s3.amazonaws.com/pot28_0080/ppot_0080_14.ptau && snarkjs powersoftau verify ppot_0080_14.ptau",
+    "setup:ceremony": "snarkjs groth16 setup private-transfer.r1cs ppot_0080_14.ptau private-transfer_0000.zkey",
+    "setup:contribute": "snarkjs zkey contribute private-transfer_0000.zkey private-transfer_0001.zkey --name='Obscura phase2 contribution' -e=\"$(head -c 64 /dev/urandom | xxd -p -c 64)\"",
+    "setup:finalize": "snarkjs zkey beacon private-transfer_0001.zkey private-transfer_final.zkey 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10 -n='Obscura Final Beacon'",
+    "generate-verifier": "snarkjs zkey export solidityverifier private-transfer_final.zkey ../contracts/Verifier.sol",
+    "copy-artifacts": "mkdir -p ../frontend/public/circuits && cp private-transfer_js/private-transfer.wasm ../frontend/public/circuits/private-transfer.wasm && cp private-transfer_final.zkey ../frontend/public/circuits/private-transfer_final.zkey && cp private-transfer_js/witness_calculator.js ../frontend/public/circuits/witness_calculator.js",
+    "verify-setup": "snarkjs zkey verify private-transfer.r1cs ppot_0080_14.ptau private-transfer_final.zkey",
+    "build-all": "npm run compile && npm run setup:ptau && npm run setup:ceremony && npm run setup:contribute && npm run setup:finalize && npm run generate-verifier && npm run copy-artifacts"
+  },
+  "dependencies": {
+    "chai": "^4.5.0",
+    "circom_tester": "^0.0.24",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "mocha": "^11.7.4",
+    "snarkjs": "^0.7.0"
+  }
+}
