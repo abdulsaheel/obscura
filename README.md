@@ -16,7 +16,7 @@ Obscura implements a non-custodial privacy solution where users can deposit ETH 
 
 ### Current Status
 
-**Beta software — not audited.** Core functionality works end-to-end and runs on the Sepolia testnet. The previously published Sepolia addresses are now **STALE** following the contract/circuit rewrite; a redeploy is pending. See [Deployment](#deployment).
+**Beta software — not audited.** Core functionality works end-to-end (deposit→withdraw verified) and is deployed live on the Sepolia testnet. See [Deployment](#deployment) for the current addresses.
 
 ### Key Features (Implemented)
 
@@ -168,11 +168,19 @@ After deploying, the addresses and canonical codehash are read from
 `deployments/<network>.json` and wired into the indexer/frontend env files
 (see the script's printed "Next steps").
 
-> ⚠️ **STALE — redeploy pending.** The contracts and circuit were rewritten
-> (new Verifier, new constraint system). Any previously published Sepolia
-> addresses and canonical codehash are **no longer valid** and have been
-> removed from this README. Redeploy with the command above and consult the
-> generated `deployments/sepolia.json` for the current addresses.
+### Live Sepolia deployment
+
+| Contract | Address |
+|----------|---------|
+| Groth16Verifier | `0xF56De3d4C1d2B1dE1be2C7bCF44eb01EcE1a2F65` |
+| PoseidonT3 | `0x2318aF65d31433A13F703eCA1678A7Af6dBa9B3D` |
+| ObscuraFactory | `0x95F45e6f974156B192Aa6bc8e8E6B9f3839976eA` |
+| PrivateVault (canonical) | `0x483773345a07701b1831eC8f2fb7D28b643BB934` |
+| IndexerRegistry | `0xffB8225E806c1AF308B2551fF4D57a6e0623e495` |
+
+**Canonical codehash:** `0xb0520d0f864f93e4714edf80d42173e4ac1c6511b946f2c78e68fdb955b931da`
+
+Deposit→withdraw verified end-to-end on Sepolia. Source of truth: `deployments/sepolia.json`.
 
 ---
 
@@ -357,5 +365,5 @@ Licensed under the [MIT License](./LICENSE). Copyright (c) 2026 Abdul Saheel.
 ---
 
 **Developer:** Abdul Saheel
-**Status:** Beta — not audited. Sepolia addresses pending redeploy (see [Deployment](#deployment)).
+**Status:** Beta — not audited. Live on Sepolia (see [Deployment](#deployment)).
 **Repository:** https://github.com/abdulsaheel/obscura

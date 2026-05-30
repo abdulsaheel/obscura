@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "NODE_OPTIONS='--loader ts-node/esm --no-warnings' ts-node src/index.ts",
     "build": "tsc",
     "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules npx jest",
     "clean": "rm -rf node_modules package-lock.json dist"

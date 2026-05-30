@@ -386,8 +386,13 @@ let vaultContract: ethers.Contract; // For querying vault stats
 
 async function setupEthereum() {
   try {
-    provider = new ethers.JsonRpcProvider(CONFIG.ethereumRpc);
-    logger.info('Ethereum provider initialized', { rpc: CONFIG.ethereumRpc });
+    // Use non-batching provider options to avoid "missing response for request"
+    // errors (BAD_DATA) seen with some public RPCs like 1RPC.
+    provider = new ethers.JsonRpcProvider(CONFIG.ethereumRpc, undefined, {
+      staticNetwork: true,
+      batchMaxCount: 1 // Explicitly disable batching
+    });
+    logger.info('Ethereum provider initialized', { rpc: CONFIG.ethereumRpc, batching: 'disabled' });
 
     if (CONFIG.indexerRegistryAddress) {
       // Load IndexerRegistry ABI (simplified for now)
@@ -399,9 +404,9 @@ async function setupEthereum() {
       indexerRegistry = new ethers.Contract(CONFIG.indexerRegistryAddress, registryAbi, provider);
       logger.info('IndexerRegistry contract initialized', { address: CONFIG.indexerRegistryAddress });
 
-      // Start polling for vault registration events instead of listening
-      pollForVaultEvents();
-      logger.info('Started polling for VaultIndexed events');
+      // Await initial poll so we catch errors during startup
+      await pollForVaultEvents();
+      logger.info('Initial event poll completed');
     } else {
       logger.warn('INDEXER_REGISTRY_ADDRESS not configured, skipping on-chain monitoring');
     }
@@ -431,9 +436,27 @@ async function handleVaultIndexedEvent(vault: string, timestamp: bigint, codeHas
   });
 
   try {
-    // Read current canonical codehash from contract
-    const canonicalCodeHash = await indexerRegistry.CANONICAL_VAULT_CODEHASH();
-    const isCanonical = codeHash === canonicalCodeHash;
+    // Optimization: Check against local config first to avoid eth_call to registry
+    let isCanonical = false;
+    let expectedHash = CONFIG.canonicalCodeHash;
+
+    if (expectedHash && codeHash.toLowerCase() === expectedHash.toLowerCase()) {
+      isCanonical = true;
+    } else {
+      // Fallback to on-chain registry if config is missing or doesn't match
+      try {
+        const canonicalCodeHash = await indexerRegistry.CANONICAL_VAULT_CODEHASH();
+        isCanonical = (codeHash === canonicalCodeHash);
+        expectedHash = canonicalCodeHash;
+      } catch (e) {
+        logger.warn('Failed to verify codehash on-chain, and local config mismatch', { 
+          vault, 
+          codeHash, 
+          configHash: CONFIG.canonicalCodeHash 
+        });
+        throw e;
+      }
+    }
 
     if (isCanonical) {
       // Add to database
@@ -464,7 +487,7 @@ async function handleVaultIndexedEvent(vault: string, timestamp: bigint, codeHas
       logger.warn('Vault rejected - non-canonical codehash', {
         vault,
         codeHash,
-        expected: canonicalCodeHash
+        expected: expectedHash
       });
     }
   } catch (error) {
@@ -479,24 +502,64 @@ async function pollForVaultEvents() {
   if (!indexerRegistry) return;
 
   try {
+    logger.info('Fetching current block number from RPC...');
     const currentBlock = await provider.getBlockNumber();
+    logger.info('Current block height', { currentBlock });
+
     if (lastPolledBlock === 0) {
-      // First run, poll from recent blocks
-      lastPolledBlock = Math.max(0, currentBlock - 1000); // Last 1000 blocks
+      lastPolledBlock = CONFIG.startBlock > 0 ? CONFIG.startBlock : Math.max(0, currentBlock - 2000);
+      
+      if (lastPolledBlock > currentBlock) {
+        logger.warn('START_BLOCK is in the future. Indexer will wait.', { 
+          startBlock: lastPolledBlock, 
+          currentBlock 
+        });
+      }
+      
+      logger.info('Initializing event poll', { startBlock: lastPolledBlock, currentBlock });
     }
 
-    const events = await indexerRegistry.queryFilter('VaultIndexed', lastPolledBlock, currentBlock);
+    // Protection: only poll up to 50,000 blocks at a time to avoid RPC timeouts
+    const toBlock = Math.min(currentBlock, lastPolledBlock + 50000);
     
+    // Don't poll if we're already caught up or START_BLOCK is in the future
+    if (lastPolledBlock > toBlock) {
+      if (lastPolledBlock > currentBlock) {
+        // Just wait silently for the chain to catch up
+        return;
+      }
+      return;
+    }
+
+    logger.info('Polling for vault events', { fromBlock: lastPolledBlock, toBlock });
+    const events = await indexerRegistry.queryFilter('VaultIndexed', lastPolledBlock, toBlock);
+    
+    if (events.length > 0) {
+      logger.info('Found vault events', { count: events.length });
+    }
+
     for (const event of events) {
       if ('args' in event) {
-        await handleVaultIndexedEvent(event.args[0], event.args[1], event.args[2], event);
+        // Wrap each event processing in its own try/catch so one failure doesn't stop the batch
+        try {
+          await handleVaultIndexedEvent(event.args[0], event.args[1], event.args[2], event);
+        } catch (e) {
+          logger.error('Failed to handle VaultIndexed event', { 
+            vault: event.args[0], 
+            error: e instanceof Error ? e.message : String(e) 
+          });
+        }
       }
     }
 
-    lastPolledBlock = currentBlock + 1;
-    logger.debug('Polled for vault events', { fromBlock: lastPolledBlock - 1, toBlock: currentBlock, eventsFound: events.length });
+    // Only advance lastPolledBlock after we successfully processed this range
+    lastPolledBlock = toBlock + 1;
   } catch (error) {
-    logger.warn('Failed to poll for vault events', { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to poll for vault events', { 
+      fromBlock: lastPolledBlock,
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    // lastPolledBlock is NOT advanced here, so it will retry the same range next interval
   }
 }
 
@@ -783,11 +846,16 @@ async function updateVaultStats() {
           withdrawals: stats[1].toString(),
           liquidity: balance.toString()
         });
-      } catch (error) {
-        logger.warn('Failed to update vault stats from contract, using cached data', {
-          vault: vault.address,
-          error: error instanceof Error ? error.message : String(error)
-        });
+      } catch (error: any) {
+        const isUnsupported = error?.message?.includes('eth_call') || error?.message?.includes('not available');
+        if (isUnsupported) {
+          logger.warn('Skipping vault stats update: eth_call not supported by RPC provider', { vault: vault.address });
+        } else {
+          logger.warn('Failed to update vault stats from contract, using cached data', {
+            vault: vault.address,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
         
         // Fallback: just update last_seen without querying contract
         await new Promise<void>((resolve, reject) => {
